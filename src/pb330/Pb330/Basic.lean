@@ -34,8 +34,15 @@ def εclose_rational (f: Sequence ℚ) (b ε: ℚ) := ∃ N, ∀ n ≥ N, |(f n)
 
 def εclose_rational₁                (f: Sequence ℚ) (b ε: ℚ) := ∃ N, ∀ n ≥ N, |(f n) - b| ≤ ε
 --        +++++++++++++++++++++++++              +        +
-def εclose' [Lattice α] [Field α] [LE α] (f: Sequence α) (b ε: α) := ∃ N, ∀ n ≥ N, |(f n) - b| ≤ ε
+
+
 def εclose (f: Sequence ℝ) (b ε: ℝ) := ∃ N, ∀ n ≥ N, |(f n) - b| ≤ ε
+
+-- A more generic version
+
+def εclose' [Lattice α] [Field α] [LE α]
+  (f: Sequence α) (b ε: α) := ∃ N, ∀ n ≥ N, |(f n) - b| ≤ ε
+
 
 -- The [Lattice α] says that all numbers of type α need to support Lattice axioms.
 -- The [Field α] says that all numbers of type α need to support the Field axioms.
