@@ -12,6 +12,9 @@ import Mathlib.Algebra.Order.Group.Basic
 import Mathlib.Algebra.Group.Basic
 
 
+--import Mathlib.Tactic.SolveByElim
+import Mathlib.Tactic.Linarith
+
 -- A sequence is a function that maps the naturals to any type `α`.
 
 def Sequence α := ℕ → α
@@ -58,9 +61,46 @@ def εclose' [Lattice α] [Field α] [LE α]
 
 -- here is a sequence s₁ : ℕ ↦ ℚ.
 
-def s₁ (n:ℕ): ℚ := n / (n+2)
+noncomputable def s₁ (n:ℕ): ℝ := (n/(n+2:ℝ))
+
+theorem div_self_add_lt_same (a b c: α) [Lattice α] [HAdd α α α] [HDiv α α α]
+  (h: c < b): a / (a + b) < a / (a + c) := by
+    exact?
+
+
+
 
 -- show that s₁ is εclose to 1 with ε = 1/22
+-- show that s₁ is εclose to 1 with ε = 1/22
+
+example : εclose s₁ 1 (1/22) := by
+  unfold εclose
+  use 42 -- discovered by inspecting a plot!
+  intro n hn
+  rw [abs_le]
+  constructor
+  · induction' hn with k hk ih
+    · unfold s₁; norm_num
+    · rw [Nat.succ_eq_add_one, s₁]
+      unfold s₁ at ih
+      have h₁ : (1:ℝ) = (↑k + 2)/(↑k + 2) := by rw [div_self]; linarith
+      calc -(1/22:ℝ)
+        _≤ k / (k + 2) - (1:ℝ) := ih
+        _= k / (k + 2) - (k + 2)/(k + 2) := by rw [h₁]
+        _= -2 / (k + 2) := by ring
+
+      have h₂ : (1:ℝ) = (k + 3)/(k + 3) := by rw [div_self]; linarith
+      conv => rhs; rhs; rw [h₂]
+      ;
+
+
+
+
+  · sorry
+
+
+
+
 
 -- example : εclose s₁ 1 (1/22) := by
 --   unfold εclose
@@ -164,3 +204,82 @@ example : converges_to (s₂) 0 := by
         _< ε := by exact h₄
     · linarith
     · linarith
+
+
+def bounded (s: Sequence ℝ) := ∃ b, converges_to s b
+
+
+
+def partial_sum (s: Sequence ℝ) (n: ℕ) :=
+  match n with
+  | 0 => s 0
+  | k + 1 => (s (k+1)) + (partial_sum s k)
+
+-- def partial_sum (s: Sequence ℝ) (n: ℕ) :=
+--   if n = 0
+--   then s 0
+--   else s n + (partial_sum s (n-1)
+--   | 0 => s 0
+--   | k + 1 => (s (k+1)) + (partial_sum k s)
+
+
+
+def s₃ (_:ℕ): ℝ := 2
+
+-- Important Note : Notice the type of partial_sum, it takes two arguments, a
+-- sequence and a natural number
+
+#check partial_sum
+
+-- Lean supports partial application, which means that we can do this:
+
+#check partial_sum s₃
+
+-- Notice that this gives us a new function with type: ℕ → ℝ, which has the same
+-- type as Sequence.  If it has the same type as Sequence, then it can be used
+-- as a sequence. This is nice because we don't need new definitions for the
+-- convergence of partial sums.
+
+namespace example1
+
+noncomputable def s (j: ℕ):ℝ := 1/2^j
+
+example : ∀ N, partial_sum s N = 2 - 1/2^N  := by
+  intro N
+
+  induction' N with k hk
+  · rw [partial_sum, s]
+    norm_num
+  · rw [partial_sum, s, hk]
+    ring
+
+end example1
+
+
+namespace example3
+
+noncomputable def harmonic_series (j: ℕ):ℝ := 1/j
+
+-- show that this series diverges.
+
+--example : ¬∃ a, 0 < a ∧ converges_to (partial_sum harmonic_series) a := by
+example : ¬∃ a, 0 < a ∧ converges_to (partial_sum (λ j => 1/j)) a := by
+  unfold converges_to
+  repeat push_neg
+  intro a h
+  use a*a
+  constructor
+  · norm_num
+    push_neg; symm
+    positivity
+
+  · unfold εclose
+    push_neg
+    intro N
+    unfold partial_sum
+
+
+end example3
+
+
+-- ok need to get back to real analysis and get calculus working before continuing
